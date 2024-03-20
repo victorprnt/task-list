@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React + TypeScript + Replit</title>
+    <script
+      type="text/javascript"
+      src="https://npmcdn.com/parse/dist/parse.min.js"
+    ></script>
+  </head>
+  <header>
+    <div>
+      <h1>JS SDK</h1>
+      <input type="text" id="taskTitle" placeholder="Task Title" /><br />
+      <input type="text" id="taskSection" placeholder="Task Section" /><br />
+      <input
+        type="text"
+        id="taskDescription"
+        placeholder="Task Description"
+      /><br />
+      <button id="createButton">Create Task</button><br /><br />
+
+      <input type="text" id="taskId" placeholder="Task ID" />
+      <button id="removeButton">Remove Task</button>
+      <button id="updateButton">Update Task</button>
+
+      <h2>Tasks:</h2>
+      <ul id="taskList"></ul>
+    </div>
+  </header>
+  <body>
+    <div id="root"></div>
+
+    <script type="module" src="/src/index.jsx"></script>
+
+    <!--
+    This script places a badge on your repl's full-browser view back to your repl's cover
+    page. Try various colors for the theme: dark, light, red, orange, yellow, lime, green,
+    teal, blue, blurple, magenta, pink!
+    -->
+    <script
+      src="https://replit.com/public/js/replit-badge-v2.js"
+      theme="dark"
+      position="bottom-right"
+    ></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize Parse
+        Parse.initialize(
+          "OS5A1y35CLr1KmntEGNFcmNR2PaRRk4k7fKjixIp",
+          "rtPxaXX0Wl3fnHPaaxtrabGTU3koOunz3pTr5GHR",
+        ); //PASTE HERE YOUR Back4App APPLICATION ID AND YOUR JavaScript KEY
+        Parse.serverURL = "https://parseapi.back4app.com/";
+
+        // Function to fetch and display tasks
+        async function fetchAndDisplayTasks() {
+          let Task = Parse.Object.extend("Task");
+          let query = new Parse.Query(Task);
+          try {
+            let tasks = await query.find();
+            let taskList = document.getElementById("taskList");
+            taskList.innerHTML = ""; // Clear previous tasks
+            tasks.forEach((task) => {
+              let listItem = document.createElement("li");
+              listItem.textContent = `${task.get("title")} - ${task.get(
+                "section",
+              )} - ${task.get("description")}`;
+              taskList.appendChild(listItem);
+            });
+          } catch (error) {
+            console.error("Error fetching tasks:", error);
+          }
+        }
+
+        // Call the function to fetch and display tasks on page load
+        fetchAndDisplayTasks();
+
+        // Create a new Task
+        async function createTask() {
+          // Creates a new Parse "Task" object
+          let Task = Parse.Object.extend("Task");
+          let task = new Task();
+          // Set the input values to the new "Task" object
+          task.set("title", document.getElementById("taskTitle").value);
+          task.set("section", document.getElementById("taskSection").value);
+          task.set(
+            "description",
+            document.getElementById("taskDescription").value,
+          );
+          try {
+            // Call the save method, which returns the saved object if successful
+            task = await task.save();
+            if (task !== null) {
+              // Notify the success by getting the attributes from the "Task" object
+              alert(
+                `New task created with success! TaskId: ${
+                  task.id
+                }, Title: ${task.get("title")}`,
+              );
+            }
+          } catch (error) {
+            alert(`Error: ${error.message}`);
+          }
+        }
+
+        // Remove a Task
+        async function removeTask(taskId) {
+          let Task = Parse.Object.extend("Task");
+          let query = new Parse.Query(Task);
+          try {
+            let task = await query.get(taskId);
+            await task.destroy();
+            alert("Task removed successfully.");
+          } catch (error) {
+            alert(`Error: ${error.message}`);
+          }
+        }
+
+        // Function to update a Task
+        async function updateTask(taskId, title, section, description) {
+          let newTitle = prompt("Enter new title:", title);
+          let newSection = prompt("Enter new section:", section);
+          let newDescription = prompt("Enter new description:", description);
+
+          let Task = Parse.Object.extend("Task");
+          let query = new Parse.Query(Task);
+          try {
+            let task = await query.get(taskId);
+            task.set("title", newTitle);
+            task.set("section", newSection);
+            task.set("description", newDescription);
+            await task.save();
+            alert("Task updated successfully.");
+            fetchTasks(); // Refresh task list after updating a task
+          } catch (error) {
+            alert(`Error: ${error.message}`);
+          }
+        }
+
+        // Add on click listener to call the create task function
+        document
+          .getElementById("createButton")
+          .addEventListener("click", async function () {
+            createTask();
+          });
+
+        // Add on click listener to call the remove task function
+        document
+          .getElementById("removeButton")
+          .addEventListener("click", async function () {
+            let taskId = document.getElementById("taskId").value;
+            removeTask(taskId);
+          });
+      });
+    </script>
+  </body>
+</html>
